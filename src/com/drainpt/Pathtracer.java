@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.jocl.CL;
 import org.jocl.Pointer;
@@ -171,6 +172,10 @@ public class Pathtracer {
 		return buffer;
 	}
 	
+	private cl_mem createBuffer(long flags, long size) {
+		return createBuffer(flags, size, null);
+	}
+	
 	private void allocateBuffers() {
 		this.buffers = new ArrayList<cl_mem>();
 		this.numRaysBuf = createBuffer(CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, Pointer.to(new int[] {0}));
@@ -182,17 +187,17 @@ public class Pathtracer {
 
 	private void allocScreenBuffers() {
 		int numPixels = output.getWidth() * output.getHeight();
-		this.rayOriginBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.rayDirBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.hitMtlIdxBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int, null);
-		this.hitPointBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.hitNormalBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.rayList0Buf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int, null);
-		this.rayList1Buf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int, null);
-		this.maskBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.accumulatorBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.radianceBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
-		this.prngSeedsBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int, null);
+		this.rayOriginBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.rayDirBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.hitMtlIdxBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int);
+		this.hitPointBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.hitNormalBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.rayList0Buf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int);
+		this.rayList1Buf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int);
+		this.maskBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.accumulatorBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.radianceBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3);
+		this.initPRNGSeedBuffer(numPixels);
 	}
 	
 	private void allocSceneBuffers() {
@@ -253,6 +258,18 @@ public class Pathtracer {
 	
 	private void ARGUMENT(float val) {
 		this.ARGUMENT(Sizeof.cl_float, Pointer.to(new float[] {val}));
+	}
+	
+	private void initPRNGSeedBuffer(int size) {
+
+		Random random = new Random();
+		int[] arr = new int[size];
+		for(int i = 0; i < size; i++) {
+			arr[i] = random.nextInt();
+		}
+		
+		this.prngSeedsBuf = createBuffer(CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, size * Sizeof.cl_int, Pointer.to(arr));
+		
 	}
 	
 	private void generatePrimaryRays() {
