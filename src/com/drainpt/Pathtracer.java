@@ -53,6 +53,9 @@ public class Pathtracer {
 	// Buffers
 	protected List<cl_mem> buffers;
 	
+	// PRNG seed buffers
+	protected cl_mem prngSeedsBuf;
+	
 	// ray origin buffers
 	protected cl_mem rayOriginBuf;
 	protected cl_mem rayDirBuf;
@@ -189,6 +192,7 @@ public class Pathtracer {
 		this.maskBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
 		this.accumulatorBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
 		this.radianceBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_float3, null);
+		this.prngSeedsBuf = createBuffer(CL.CL_MEM_READ_WRITE, numPixels * Sizeof.cl_int, null);
 	}
 	
 	private void allocSceneBuffers() {

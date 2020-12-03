@@ -12,6 +12,9 @@ struct Hit {
 	float distance;
 };
 
+// ----- Helper functions
+// Feel no shame in using these as they are inlined anyways :)
+
 // ----- Intersection functions
 
 // The derivation for this is pretty tedious if you aren't clever about the vectors
@@ -173,7 +176,8 @@ __kernel void shadeKernel(
 	
 		// The ray missed
 		// TODO: Sky shading
-	
+		accumulatorBuffer[rayIndex] = maskBuffer[rayIndex] * (float3)(1.0f, 1.0f, 1.0f);
+		
 	} else {
 	
 		// Get hit info
