@@ -13,7 +13,12 @@ struct Hit {
 };
 
 // ----- Helper functions
-// Feel no shame in using these as they are inlined anyways :)
+
+float random(long *seed) {
+	int next = (*seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+	*seed = next;
+	return (next & 16777215) / ((float)(1 << 24));
+}
 
 // ----- Intersection functions
 
@@ -57,6 +62,9 @@ struct Hit intersectSphere(
 
 // ----- Kernels
 
+// Ray generation kernel.
+// Generates rays based on camera parameters
+// Also initializes raylists, zeroes accumulator/mask
 __kernel void generateRaysKernel(
 	__global float3 *rayOriginsBuffer,
 	__global float3 *rayDirectionsBuffer,
@@ -101,6 +109,8 @@ __kernel void generateRaysKernel(
 	
 }
 
+// Intersection kernel
+// Raytraces rays in buffer based on raylist, writes hits to hitbuffer
 __kernel void intersectKernel(
 	__global float3 *rayOriginsBuffer,
 	__global float3 *rayDirectionsBuffer,
@@ -154,6 +164,8 @@ __kernel void intersectKernel(
 
 }
 
+// Shading kernel
+// Turns hits into new rays + updated mask/accum buffers
 __kernel void shadeKernel(
 	__global float3 *rayOrigins,
 	__global float3 *rayDirectionsBuffer,
@@ -164,7 +176,8 @@ __kernel void shadeKernel(
 	__global float3 *accumulatorBuffer,
 	__global int *rayListBuffer,
 	__global int *nextRayListBuffer
-	__global int *rayIdx
+	__global int *rayIdx,
+	__global long *PRNGSeeds
 ) {
 	
 	const int workItemID = get_global_id(0);
@@ -188,6 +201,7 @@ __kernel void shadeKernel(
 		// Shade material
 		
 		// Write new ray to raybuffer
+		
 	
 		// Add to raylist
 		nextRayListBuffer[*rayIdx] = rayIndex;

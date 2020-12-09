@@ -263,13 +263,29 @@ public class Pathtracer {
 	private void initPRNGSeedBuffer(int size) {
 
 		Random random = new Random();
-		int[] arr = new int[size];
+		long[] arr = new long[size];
 		for(int i = 0; i < size; i++) {
-			arr[i] = random.nextInt();
+			arr[i] = random.nextLong();
 		}
 		
-		this.prngSeedsBuf = createBuffer(CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, size * Sizeof.cl_int, Pointer.to(arr));
+		this.prngSeedsBuf = createBuffer(CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, size * Sizeof.cl_long, Pointer.to(arr));
 		
+	}
+	
+	private void resetRadiances() {
+		CL.clEnqueueFillBuffer(commandQueue, radianceBuf, Pointer.to(new float[] {0}), 4, 0, this.output.getWidth() * this.output.getHeight() * 4, 0, null, null);
+	}
+	
+	private int getNumRays() {
+		
+		int[] arr = new int[1];
+		CL.clEnqueueReadBuffer(commandQueue, numRaysBuf, true, 0, Sizeof.cl_int, Pointer.to(arr), 0, null, null);
+		return arr[0];
+		
+	}
+	
+	private void setNumRays(int num) {
+		CL.clEnqueueWriteBuffer(commandQueue, numRaysBuf, true, 0, 4, Pointer.to(new int[] {num}), 0, null, null);
 	}
 	
 	private void generatePrimaryRays() {
@@ -311,8 +327,25 @@ public class Pathtracer {
 	
 	public void render() {
 		
+		resetRadiances();
+		
+		int NUM_SAMPLES = 25;
+		for(int sample = 0; sample < NUM_SAMPLES; sample++) {
+			doSample();
+		}
+		
+	}
+	
+	private void doSample() {
+		
 		generatePrimaryRays();
-		doIntersectionPass();
+		
+		int MAX_BOUNCES = 5;
+		for(int i = 0; i < MAX_BOUNCES; i++) {
+		
+			this.doIntersectionPass();
+			
+		}
 		
 	}
 	
